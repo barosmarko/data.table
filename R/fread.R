@@ -1,5 +1,5 @@
 
-fread <- function(input="",sep="auto",sep2="auto",nrows=-1L,header="auto",na.strings="NA",stringsAsFactors=FALSE,verbose=getOption("datatable.verbose"),autostart=1L,skip=0L,select=NULL,drop=NULL,colClasses=NULL,integer64=getOption("datatable.integer64"),dec=if (sep!=".") "." else ",",showProgress=getOption("datatable.showProgress"),data.table=getOption("datatable.fread.datatable")) {
+fread <- function(input="",tmpDir=NULL,sep="auto",sep2="auto",nrows=-1L,header="auto",na.strings="NA",stringsAsFactors=FALSE,verbose=getOption("datatable.verbose"),autostart=1L,skip=0L,select=NULL,drop=NULL,colClasses=NULL,integer64=getOption("datatable.integer64"),dec=if (sep!=".") "." else ",",showProgress=getOption("datatable.showProgress"),data.table=getOption("datatable.fread.datatable")) {
     if (!is.character(dec) || length(dec)!=1L || nchar(dec)!=1) stop("dec must be a single character e.g. '.' or ','")
     if (getOption("datatable.fread.dec.experiment") && Sys.localeconv()["decimal_point"] != dec) {
         oldlocale = Sys.getlocale("LC_NUMERIC")
@@ -54,10 +54,14 @@ fread <- function(input="",sep="auto",sep2="auto",nrows=-1L,header="auto",na.str
         # text input
     } else if (!file.exists(input)) {
         if (length(grep(' ', input)) == 0) stop("File '",input,"' does not exist. Include one or more spaces to consider the input a system command.")
-        tt = tempfile()
+        if (!is.null(tmpDir)) {
+            tt = tempfile(tmpdir = tmpDir)
+        } else {
+            tt = tempfile()
+        }
         on.exit(unlink(tt), add = TRUE)
         if (.Platform$OS.type == "unix") {
-            if (file.exists('/dev/shm') && file.info('/dev/shm')$isdir) {
+            if (file.exists('/dev/shm') && file.info('/dev/shm')$isdir && is.null(tmpDir)) {
                 tt = tempfile(tmpdir = '/dev/shm')
             }
             system(paste('(', input, ') > ', tt, sep=""))
